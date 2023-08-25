@@ -7,6 +7,7 @@ import {
      Vibration,
      Pressable,
      Keyboard,
+     FlatList,
     } from 'react-native';
 import ResultImc from './ResultImc/';
 import styles from "./style"
@@ -19,10 +20,16 @@ const [messageImc, setMessageImc] = useState("Preencha o peso e altura")
 const [imc, setImc] = useState(null)
 const [textButton, setTextButton ] = useState("Calcular")
 const [errorMessage, setErrorMessage] = useState(null)
+const [imcList, setImcList] = useState([])
+
+
 
 function imcCalculator() {
     let heightFormat = height.replace(",",".")
-    return setImc((weight / (heightFormat * heightFormat)).toFixed(2))
+    let totalImc = (weight / (heightFormat * heightFormat)).toFixed(2);
+
+    setImcList ((arr) => [...arr, {id: new Date().getTime(), imc: totalImc}]) // aplica na lista um novo elemento pegando os elementos anteriores e adicionando mais um com id e imc (objeto)
+    setImc(totalImc)
 }
 
 function verificationImc() {
@@ -40,18 +47,18 @@ function validationImc() {
         setMessageImc("O seu imc é igual a:")
         setTextButton("Calcular Novamente")
         setErrorMessage(null)
-        return
+    } else {
+        verificationImc()
+        setImc(null)
+        setTextButton("Calcular")
+        setMessageImc("preencha o peso e altura")
     }
-    verificationImc()
-
-    setImc(null)
-    setTextButton("Calcular")
-    setMessageImc("preencha o peso e altura")
 }
 
     return (
-        <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
-            <View style={styles.form}>
+            <View style={styles.formContext}>
+                {imc == null ?
+            <Pressable onPress={Keyboard.dismiss} style={styles.form}>
 
                 <Text style={styles.formLabel}>Altura</Text>
                 <Text style={styles.errorMessage}>{errorMessage}</Text>
@@ -81,8 +88,36 @@ function validationImc() {
                 >
                     <Text style={styles.textButtonCalculator}>{textButton}</Text>
                 </TouchableOpacity>
+            </Pressable>
+            : 
+            <View style={styles.exhibitionResultImc}>
+                <ResultImc messageResultImc={messageImc} resultImc={imc}/>
+                <TouchableOpacity
+                    style={styles.buttonCalculator}
+                    onPress={() => {
+                        validationImc()
+                    }}
+                    >
+                <Text style={styles.textButtonCalculator}>{textButton}</Text>
+                </TouchableOpacity>
             </View>
-            <ResultImc messageResultImc={messageImc} resultImc={imc}/>
-        </Pressable>
+            }
+            <FlatList
+            showsVerticalScrollIndicator={false} // esconde a barra de rolagem da flatlist
+            style={styles.listImcs}
+            data={[...imcList].reverse()} // reverte a lista, por ex: index 5,4,3,2,1 para ser do ultimo para o primeiro elemento
+            renderItem={({item}) => { // para cada item ele renderiza este Text
+                return (
+                    <Text style={styles.resultImcItem}>
+                        <Text style={styles.textResultItemList}>Resultado IMC = </Text>
+                        {item.imc}
+                    </Text>
+                )
+            }}
+            keyExtractor={(item) => {
+                item.id
+            }} // para cada item que imprimir, ele vai passar uma chave única
+            />
+            </View>
     );
 }
